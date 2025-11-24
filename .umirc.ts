@@ -9,7 +9,7 @@ export default defineConfig({
   layout: {
     title: '',
   },
-  publicPath: './',
+  publicPath: process.env.NODE_ENV === 'production' ? './' : '/',
   history: { type: 'hash' },
   locale: {
     antd: true,
