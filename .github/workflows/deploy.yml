@@ -18,8 +18,7 @@ jobs:
       # 2. 安装 pnpm
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
-        with:
-          version: 9
+  
 
       # 3. 安装 Node.js（支持 pnpm 缓存）
       - name: Setup Node.js
