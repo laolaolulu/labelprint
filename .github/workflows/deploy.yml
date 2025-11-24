@@ -18,7 +18,6 @@ jobs:
       # 2. 安装 pnpm
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
-  
 
       # 3. 安装 Node.js（支持 pnpm 缓存）
       - name: Setup Node.js
@@ -32,15 +31,15 @@ jobs:
         run: pnpm install
 
       # 5. 构建 UmiJS
-        # 默认命令是 pnpm build
+      # 默认命令是 pnpm build
       - name: Build UmiJS
         run: pnpm build
 
-      # # 6. 发布 dist 到 gh-pages 分支
-      # - name: Deploy to gh-pages
-      #   uses: peaceiris/actions-gh-pages@v3
-      #   with:
-      #     github_token: ${{ secrets.GITHUB_TOKEN }}
-      #     publish_dir: ./dist
-      #     publish_branch: gh-pages
-      #     force_orphan: true
+      # 6. 发布 dist 到 gh-pages 分支
+      - name: Deploy to gh-pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
+          publish_branch: gh-pages
+          force_orphan: true
