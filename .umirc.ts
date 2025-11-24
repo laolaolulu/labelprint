@@ -9,6 +9,16 @@ export default defineConfig({
   layout: {
     title: '',
   },
+  publicPath: './',
+  history: { type: 'hash' },
+  locale: {
+    antd: true,
+    // baseSeparator: '',
+    default: 'zh-CN',
+    title: true,
+    baseNavigator: false,
+    useLocalStorage: true,
+  },
   routes: [
     {
       path: '/',

@@ -21,7 +21,7 @@ import {
   text,
 } from '@pdfme/schemas';
 import { Designer } from '@pdfme/ui';
-import { useModel } from '@umijs/max';
+import { getLocale, useModel } from '@umijs/max';
 import {
   Button,
   Divider,
@@ -33,7 +33,7 @@ import {
   Space,
   Typography,
 } from 'antd';
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 
 // 默认模板
 let defTemplate: Template = {
@@ -48,18 +48,21 @@ let defTemplate: Template = {
 let newTemplate = defTemplate;
 
 export default () => {
-  const creTemNameRef = useRef<any>();
+  const currentLocale = getLocale(); //语言切换
+  const creTemNameRef = useRef<any>(); //输入模板名称 弹窗控制
   const designerRef = useRef<Designer | null>(null);
+
   const { templates, setDir, selectTemplate, setSelectTem } =
     useModel('settings');
-
-  const SelectDir = async () => {
+  //#region 授权设置修改打印模板存放目录
+  const SelectDir = useCallback(async () => {
     message.info('请选择并授权加载打印模板的目录');
     const dirHandle = await window.showDirectoryPicker({
       mode: 'readwrite',
     });
     setDir('templates', dirHandle);
-  };
+  }, [setDir]);
+  //#endregion
 
   // //#region 宽高修改后想要重新渲染下模板
   // useEffect(() => {
@@ -91,7 +94,7 @@ export default () => {
       options: {
         zoomLevel: 1, // 初始缩放级别
         sidebarOpen: true,
-
+        lang: currentLocale.split('-')[0],
         // font: {
         //   // serif: {
         //   //   data: 'Microsoft YaHei',
@@ -113,6 +116,16 @@ export default () => {
       }
     };
   }, []);
+  //切换显示模板
+  useEffect(() => {
+    templates?.files
+      .find((f) => f.name == selectTemplate)
+      ?.text()
+      .then((txt) => {
+        defTemplate = JSON.parse(txt);
+        designerRef.current?.updateTemplate(defTemplate);
+      });
+  }, [selectTemplate]);
 
   return (
     <>
