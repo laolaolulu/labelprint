@@ -21,7 +21,7 @@ import {
   text,
 } from '@pdfme/schemas';
 import { Designer } from '@pdfme/ui';
-import { getLocale, useModel } from '@umijs/max';
+import { useIntl, useModel } from '@umijs/max';
 import {
   Button,
   Divider,
@@ -33,7 +33,7 @@ import {
   Space,
   Typography,
 } from 'antd';
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 // 默认模板
 let defTemplate: Template = {
@@ -44,16 +44,15 @@ let defTemplate: Template = {
   },
   schemas: [[]],
 };
-//修改后的模板
-let newTemplate = defTemplate;
 
 export default () => {
-  const currentLocale = getLocale(); //语言切换
+  const intl = useIntl(); //语言国际化
   const creTemNameRef = useRef<any>(); //输入模板名称 弹窗控制
-  const designerRef = useRef<Designer | null>(null);
-
+  const designerRef = useRef<Designer | null>(null); //设计器UI
+  const [newTemplate, setNewTemplate] = useState(defTemplate); //设计器修改模板
   const { templates, setDir, selectTemplate, setSelectTem } =
     useModel('settings');
+
   //#region 授权设置修改打印模板存放目录
   const SelectDir = useCallback(async () => {
     message.info('请选择并授权加载打印模板的目录');
@@ -64,18 +63,8 @@ export default () => {
   }, [setDir]);
   //#endregion
 
-  // //#region 宽高修改后想要重新渲染下模板
-  // useEffect(() => {
-  //   if (designerRef.current) {
-  //     newTemplate.basePdf.width = width;
-  //     newTemplate.basePdf.height = height;
-  //     designerRef.current.updateTemplate(newTemplate);
-  //   }
-  // }, [width, height]);
-  // //#endregion
-
+  //#region 初始化Designer设计器
   useEffect(() => {
-    // 初始化Designer
     designerRef.current = new Designer({
       domContainer: document.getElementById('container')!,
       template: defTemplate,
@@ -94,7 +83,7 @@ export default () => {
       options: {
         zoomLevel: 1, // 初始缩放级别
         sidebarOpen: true,
-        lang: currentLocale.split('-')[0],
+        lang: intl.locale.split('-')[0] as any,
         // font: {
         //   // serif: {
         //   //   data: 'Microsoft YaHei',
@@ -104,18 +93,15 @@ export default () => {
       },
     });
     designerRef.current.onChangeTemplate((t) => {
-      newTemplate = t;
-      if (JSON.stringify(newTemplate) !== JSON.stringify(defTemplate)) {
-      }
+      setNewTemplate(t);
     });
     // 清理函数
     return () => {
-      if (designerRef.current) {
-        designerRef.current.destroy();
-        designerRef.current = null;
-      }
+      designerRef.current?.destroy();
     };
   }, []);
+  //#endregion
+
   //切换显示模板
   useEffect(() => {
     templates?.files
@@ -126,6 +112,11 @@ export default () => {
         designerRef.current?.updateTemplate(defTemplate);
       });
   }, [selectTemplate]);
+
+  const temChange = useMemo(
+    () => JSON.stringify(newTemplate) === JSON.stringify(defTemplate),
+    [newTemplate],
+  );
 
   return (
     <>
@@ -168,6 +159,7 @@ export default () => {
             buttonsRender={([_, rightButton]) => [
               <Button
                 icon={<SaveOutlined />}
+                disabled={temChange}
                 onClick={async () => {
                   if (selectTemplate) {
                   } else {
@@ -196,6 +188,7 @@ export default () => {
                   }
                 }}
               >
+                {/* {temChange ? '' : '* '} */}
                 保存
               </Button>,
               rightButton,

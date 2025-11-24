@@ -5,9 +5,9 @@ export default () => {
   const [templates, setTemplates] = useState<{
     dir: FileSystemDirectoryHandle;
     files: File[];
-  }>();
-  const [printdir, setPrintdir] = useState<FileSystemDirectoryHandle>();
-  const [selectTemplate, setSelectTemplate] = useState<string>();
+  }>(); //打印模板目录
+  const [printdir, setPrintdir] = useState<FileSystemDirectoryHandle>(); //打印文件目录（自动打印使用）
+  const [selectTemplate, setSelectTemplate] = useState<string>(); //默认选择的打印模板名称
 
   useEffect(() => {
     const template = localStorage.getItem('selectTemplate');
@@ -33,7 +33,11 @@ export default () => {
   //#region 如果切换了模板读取目录后，想要校验下默认选中的模板是否再目录中存在，不存在置undefined
   useEffect(() => {
     if (!templates || !templates.files.find((f) => f.name == selectTemplate)) {
-      setSelectTem(undefined);
+      if (templates && templates.files.length > 0) {
+        setSelectTem(templates.files[0].name);
+      } else {
+        setSelectTem(undefined);
+      }
     }
   }, [templates]);
   //#endregion
