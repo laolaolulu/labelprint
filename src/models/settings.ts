@@ -32,12 +32,14 @@ export default () => {
 
   //#region 如果切换了模板读取目录后，想要校验下默认选中的模板是否再目录中存在，不存在置undefined
   useEffect(() => {
-    if (!templates || !templates.files.find((f) => f.name == selectTemplate)) {
-      if (templates && templates.files.length > 0) {
-        setSelectTem(templates.files[0].name);
+    if (templates && templates.files.length > 0) {
+      if (templates.files.find((f) => f.name == selectTemplate)) {
+        //  setSelectTem(selectTemplate);
       } else {
-        setSelectTem(undefined);
+        setSelectTem(templates.files[0].name);
       }
+    } else {
+      setSelectTem(undefined);
     }
   }, [templates]);
   //#endregion
@@ -56,13 +58,17 @@ export default () => {
   };
 
   /**选择打印模板 */
-  const setSelectTem = (template?: string) => {
-    if (template) {
-      localStorage.setItem('selectTemplate', template);
+  const setSelectTem = (template?: string | null) => {
+    if (template === null) {
+      setSelectTemplate(undefined);
     } else {
-      localStorage.removeItem('selectTemplate');
+      if (template) {
+        localStorage.setItem('selectTemplate', template);
+      } else {
+        localStorage.removeItem('selectTemplate');
+      }
+      setSelectTemplate(template);
     }
-    setSelectTemplate(template);
   };
 
   /**获取目录权限保存路径 */

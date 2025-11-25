@@ -1,7 +1,10 @@
 import MyModalForm from '@/components/MyModalForm';
 import {
+  DownloadOutlined,
   DownOutlined,
+  ExclamationCircleOutlined,
   FileOutlined,
+  FileSyncOutlined,
   FolderAddOutlined,
   FolderOpenOutlined,
   PrinterOutlined,
@@ -29,6 +32,7 @@ import {
   Flex,
   InputNumber,
   message,
+  Modal,
   Select,
   Space,
   Typography,
@@ -111,12 +115,44 @@ export default () => {
         defTemplate = JSON.parse(txt);
         designerRef.current?.updateTemplate(defTemplate);
       });
+
+    if (!temChange && selectTemplate) {
+      //当前模板存在编辑
+      Modal.confirm({
+        title: '当前模板已修改暂未保存',
+        icon: <ExclamationCircleOutlined />,
+        content:
+          '点击【确认】保存当前模板编辑；点击【取消】忽略丢弃当前模板的编辑项',
+
+        onOk() {
+          SaveTemplate(selectTemplate);
+        },
+      });
+    }
   }, [selectTemplate]);
 
   const temChange = useMemo(
     () => JSON.stringify(newTemplate) === JSON.stringify(defTemplate),
     [newTemplate],
   );
+  //#region 保存编辑的模板
+  const SaveTemplate = useCallback(
+    (filename: string) => {
+      templates!.dir
+        .getFileHandle(filename, {
+          create: true,
+        })
+        .then((fileHandle) => fileHandle.createWritable())
+        .then((writable) => {
+          writable.write(JSON.stringify(newTemplate));
+          writable.close();
+          defTemplate = newTemplate;
+          setNewTemplate({ ...newTemplate }); //为了刷新保存按钮是否可用
+        });
+    },
+    [templates, newTemplate],
+  );
+  //#endregion
 
   return (
     <>
@@ -128,33 +164,51 @@ export default () => {
             menu={{
               items: [
                 {
-                  key: '1',
-                  label: (
-                    <a
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      href="https://www.antgroup.com"
-                    >
-                      导出
-                    </a>
-                  ),
+                  key: 'export',
+                  icon: <DownloadOutlined />,
+                  disabled: !selectTemplate,
+                  label: '导出',
                 },
                 {
                   type: 'divider',
                 },
                 {
-                  key: '12',
-                  label: (
-                    <a
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      href="https://www.antgroup.com"
-                    >
-                      重置
-                    </a>
-                  ),
+                  key: 'reset',
+                  icon: <FileSyncOutlined />,
+                  disabled: temChange,
+                  title: '丢弃模板编辑项',
+                  label: '重置',
                 },
               ],
+              onClick: async (info) => {
+                switch (info.key) {
+                  case 'reset':
+                    setNewTemplate(defTemplate);
+                    designerRef.current?.updateTemplate(defTemplate);
+                    break;
+                  case 'export':
+                    // 选择目录
+                    const directoryHandle = await window.showDirectoryPicker();
+                    const fileHandle = await directoryHandle.getFileHandle(
+                      selectTemplate!,
+                      {
+                        create: true,
+                      },
+                    );
+                    // 创建可写流
+                    const writable = await fileHandle.createWritable();
+
+                    // 将 File 对象写入
+                    await writable.write(
+                      templates?.files.find((f) => f.name == selectTemplate)!,
+                    );
+                    await writable.close();
+                    break;
+
+                  default:
+                    break;
+                }
+              },
             }}
             buttonsRender={([_, rightButton]) => [
               <Button
@@ -162,6 +216,7 @@ export default () => {
                 disabled={temChange}
                 onClick={async () => {
                   if (selectTemplate) {
+                    SaveTemplate(selectTemplate);
                   } else {
                     if (!templates) {
                       await SelectDir();
@@ -170,18 +225,7 @@ export default () => {
                     //创建名称
                     const res = await creTemNameRef.current.open();
                     if (res) {
-                      // 2. 创建新文件
-                      const fileHandle = await templates!.dir.getFileHandle(
-                        res.name,
-                        {
-                          create: true,
-                        },
-                      );
-                      // 3. 获取可写流
-                      const writable = await fileHandle.createWritable();
-                      // 4. 写入内容
-                      await writable.write(JSON.stringify(newTemplate));
-                      await writable.close();
+                      SaveTemplate(res.name);
                     } else {
                       message.error('未命名，取消保存');
                     }
@@ -200,7 +244,8 @@ export default () => {
             onChange={(val) => {
               setSelectTem(val);
             }}
-            defaultValue={selectTemplate}
+            //defaultValue={selectTemplate}
+            value={selectTemplate}
             style={{ width: 200 }}
             options={templates?.files.map((m) => ({ value: m.name }))}
           />
@@ -280,6 +325,19 @@ export default () => {
                 switch (info.key) {
                   case 'read':
                     SelectDir();
+                    break;
+                  case 'empty':
+                    defTemplate = {
+                      basePdf: {
+                        width: 150,
+                        height: 100,
+                        padding: [0, 0, 0, 0],
+                      },
+                      schemas: [[]],
+                    };
+                    setSelectTem(null);
+                    //  setNewTemplate(defTemplate);
+                    designerRef.current?.updateTemplate(defTemplate);
                     break;
 
                   default:
