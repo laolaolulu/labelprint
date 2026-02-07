@@ -11,7 +11,7 @@ import {
   SaveOutlined,
 } from '@ant-design/icons';
 import { ProFormText } from '@ant-design/pro-components';
-import { Template } from '@pdfme/common';
+import { getDefaultFont, Template } from '@pdfme/common';
 import {
   barcodes,
   dateTime,
@@ -51,7 +51,7 @@ let defTemplate: Template = {
 
 export default () => {
   const intl = useIntl(); //语言国际化
-  const creTemNameRef = useRef<any>(); //输入模板名称 弹窗控制
+  const creTemNameRef = useRef<any>(undefined); //输入模板名称 弹窗控制
   const designerRef = useRef<Designer | null>(null); //设计器UI
   const [newTemplate, setNewTemplate] = useState(defTemplate); //设计器修改模板
   const { templates, setDir, selectTemplate, setSelectTem } =
@@ -88,12 +88,26 @@ export default () => {
         zoomLevel: 1, // 初始缩放级别
         sidebarOpen: true,
         lang: intl.locale.split('-')[0] as any,
-        // font: {
-        //   // serif: {
-        //   //   data: 'Microsoft YaHei',
-        //   //   fallback: true,
-        //   // },
-        // },
+        font: {
+          ...getDefaultFont(),
+          普惠体: {
+            data: `${window.location.origin}/font/AlibabaPuHuiTi-3-55-Regular.ttf`,
+            // fallback: true,
+            subset: true,
+          },
+          普惠粗体: {
+            data: `${window.location.origin}/font/AlibabaPuHuiTi-3-85-Bold.ttf`,
+            subset: true,
+          },
+          思源黑体: {
+            data: `${window.location.origin}/font/SourceHanSansCN-VF.ttf`,
+            subset: true,
+          },
+          思源宋体: {
+            data: `${window.location.origin}/font/SourceHanSerifCN-VF.ttf`,
+            subset: true,
+          },
+        },
       },
     });
     designerRef.current.onChangeTemplate((t) => {
@@ -105,11 +119,34 @@ export default () => {
     };
   }, []);
   //#endregion
+  const temChange = useMemo(
+    () => JSON.stringify(newTemplate) === JSON.stringify(defTemplate),
+    [newTemplate],
+  );
+
+  //#region 保存编辑的模板
+  const SaveTemplate = useCallback(
+    (filename: string) => {
+      templates!.dir
+        .getFileHandle(filename, {
+          create: true,
+        })
+        .then((fileHandle) => fileHandle.createWritable())
+        .then((writable) => {
+          writable.write(JSON.stringify(newTemplate));
+          writable.close();
+          defTemplate = newTemplate;
+          setNewTemplate({ ...newTemplate }); //为了刷新保存按钮是否可用
+        });
+    },
+    [templates, newTemplate],
+  );
+  //#endregion
 
   //切换显示模板
   useEffect(() => {
     templates?.files
-      .find((f) => f.name == selectTemplate)
+      .find((f) => f.name === selectTemplate)
       ?.text()
       .then((txt) => {
         defTemplate = JSON.parse(txt);
@@ -130,29 +167,6 @@ export default () => {
       });
     }
   }, [selectTemplate]);
-
-  const temChange = useMemo(
-    () => JSON.stringify(newTemplate) === JSON.stringify(defTemplate),
-    [newTemplate],
-  );
-  //#region 保存编辑的模板
-  const SaveTemplate = useCallback(
-    (filename: string) => {
-      templates!.dir
-        .getFileHandle(filename, {
-          create: true,
-        })
-        .then((fileHandle) => fileHandle.createWritable())
-        .then((writable) => {
-          writable.write(JSON.stringify(newTemplate));
-          writable.close();
-          defTemplate = newTemplate;
-          setNewTemplate({ ...newTemplate }); //为了刷新保存按钮是否可用
-        });
-    },
-    [templates, newTemplate],
-  );
-  //#endregion
 
   return (
     <>
@@ -183,26 +197,34 @@ export default () => {
               onClick: async (info) => {
                 switch (info.key) {
                   case 'reset':
-                    setNewTemplate(defTemplate);
-                    designerRef.current?.updateTemplate(defTemplate);
+                    {
+                      setNewTemplate(defTemplate);
+                      designerRef.current?.updateTemplate(defTemplate);
+                    }
                     break;
                   case 'export':
-                    // 选择目录
-                    const directoryHandle = await window.showDirectoryPicker();
-                    const fileHandle = await directoryHandle.getFileHandle(
-                      selectTemplate!,
-                      {
-                        create: true,
-                      },
-                    );
-                    // 创建可写流
-                    const writable = await fileHandle.createWritable();
+                    {
+                      // 选择目录
+                      const directoryHandle =
+                        await window.showDirectoryPicker();
+                      const fileHandle = await directoryHandle.getFileHandle(
+                        selectTemplate!,
+                        {
+                          create: true,
+                        },
+                      );
+                      // 创建可写流
+                      const writable = await fileHandle.createWritable();
 
-                    // 将 File 对象写入
-                    await writable.write(
-                      templates?.files.find((f) => f.name == selectTemplate)!,
-                    );
-                    await writable.close();
+                      // 将 File 对象写入
+                      await writable.write(
+                        templates!.files.find(
+                          (f) => f.name === selectTemplate,
+                        )!,
+                      );
+
+                      await writable.close();
+                    }
                     break;
 
                   default:
@@ -210,8 +232,9 @@ export default () => {
                 }
               },
             }}
-            buttonsRender={([_, rightButton]) => [
+            buttonsRender={([, rightButton]) => [
               <Button
+                key="save"
                 icon={<SaveOutlined />}
                 disabled={temChange}
                 onClick={async () => {
@@ -238,7 +261,7 @@ export default () => {
               rightButton,
             ]}
           />
-          <Divider type="vertical" />
+          <Divider orientation="vertical" />
           模板:
           <Select
             onChange={(val) => {
@@ -350,32 +373,33 @@ export default () => {
               //  type="primary"
               icon={<DownOutlined />}
               onClick={(e) => e.preventDefault()}
-              iconPosition="end"
+              iconPlacement="end"
             >
               新建
               <FolderAddOutlined />
             </Button>
           </Dropdown>
-          <Divider type="vertical" />
+          <Divider orientation="vertical" />
           尺寸
           <Space.Compact block>
             {['width', 'height'].map((m) => (
               <InputNumber
                 min={1}
                 max={999}
+                key={m}
                 placeholder={m}
                 style={{ width: 50 }}
-                defaultValue={defTemplate.basePdf[m]}
+                defaultValue={(defTemplate.basePdf as any)[m]}
                 controls={false}
                 onBlur={(e) => {
-                  newTemplate.basePdf[m] = Number(e.target.value);
+                  (newTemplate.basePdf as any)[m] = Number(e.target.value);
                   designerRef.current?.updateTemplate(newTemplate);
                 }}
               />
             ))}
           </Space.Compact>
           <Typography.Text type="secondary">mm</Typography.Text>
-          <Divider type="vertical" />
+          <Divider orientation="vertical" />
         </Space>
         <Space>
           <Button icon={<PrinterOutlined />}>打印</Button>

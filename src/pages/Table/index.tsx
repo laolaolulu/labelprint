@@ -87,7 +87,7 @@ const TableList: React.FC<unknown> = () => {
   const [updateModalVisible, handleUpdateModalVisible] =
     useState<boolean>(false);
   const [stepFormValues, setStepFormValues] = useState({});
-  const actionRef = useRef<ActionType>();
+  const actionRef = useRef<ActionType>(null);
   const [row, setRow] = useState<API.UserInfo>();
   const [selectedRowsState, setSelectedRows] = useState<API.UserInfo[]>([]);
   const columns: ProDescriptionsItemProps<API.UserInfo>[] = [
@@ -132,7 +132,7 @@ const TableList: React.FC<unknown> = () => {
           >
             配置
           </a>
-          <Divider type="vertical" />
+          <Divider orientation="vertical" />
           <a href="">订阅警报</a>
         </>
       ),

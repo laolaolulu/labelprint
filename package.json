@@ -12,25 +12,25 @@
     "start": "npm run dev"
   },
   "dependencies": {
-    "@ant-design/icons": "^5.0.1",
-    "@ant-design/pro-components": "^2.4.4",
-    "@pdfme/common": "^5.4.7",
-    "@pdfme/schemas": "^5.4.7",
-    "@pdfme/ui": "^5.4.7",
-    "@umijs/max": "^4.5.3",
-    "antd": "^5.4.0",
+    "@ant-design/icons": "^6.1.0",
+    "@ant-design/pro-components": "^2.8.10",
+    "@pdfme/common": "^5.5.8",
+    "@pdfme/schemas": "^5.5.8",
+    "@pdfme/ui": "^5.5.8",
+    "@umijs/max": "^4.6.26",
+    "antd": "^6.2.3",
     "idb": "^8.0.3"
   },
   "devDependencies": {
-    "@types/react": "^18.0.33",
-    "@types/react-dom": "^18.0.11",
+    "@types/react": "^19.2.13",
+    "@types/react-dom": "^19.2.3",
     "@types/wicg-file-system-access": "^2023.10.7",
-    "husky": "^9",
-    "lint-staged": "^13.2.0",
-    "prettier": "^2.8.7",
-    "prettier-plugin-organize-imports": "^3.2.2",
-    "prettier-plugin-packagejson": "^2.4.3",
-    "typescript": "^5.0.3"
+    "husky": "^9.1.7",
+    "lint-staged": "^16.2.7",
+    "prettier": "^3.8.1",
+    "prettier-plugin-organize-imports": "^4.3.0",
+    "prettier-plugin-packagejson": "^3.0.0",
+    "typescript": "^5.9.3"
   },
   "packageManager": "pnpm@9.7.0+sha512.dc09430156b427f5ecfc79888899e1c39d2d690f004be70e05230b72cb173d96839587545d09429b55ac3c429c801b4dc3c0e002f653830a420fa2dd4e3cf9cf"
 }
